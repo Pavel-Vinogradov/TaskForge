@@ -1,0 +1,66 @@
+#
+# GolangCI-Lint Configuration
+#
+
+run:
+  timeout: 3m
+  issues-exit-code: 1
+  tests: true
+  skip-dirs:
+    - "vendor"
+    - "third_party"
+  skip-files:
+    - "_test.go$"
+
+linters:
+  enable:
+    - govet
+    - staticcheck
+    - errcheck
+    - revive
+    - gosimple
+    - unused
+    - deadcode
+    - gofmt
+    - goimports
+    - ineffassign
+    - typecheck
+    - structcheck
+    - varcheck
+    - unparam
+    - gocyclo
+    - dupl
+
+  disable:
+    - godox         # TODO comments are allowed
+    - funlen        # отключить строгие лимиты длины функций, если не нужен
+
+linters-settings:
+  govet:
+    enable-all: true
+
+  gocyclo:
+    min-complexity: 15   # сложность функции от которой линтер начинает ругаться
+
+  dupl:
+    threshold: 150       # порог дупликации (в токенах)
+
+  revive:
+    severity: warning
+    rules:
+      - name: indent-error-flow
+      - name: var-naming
+      - name: blank-imports
+      - name: import-shadowing
+      - name: unused-parameter
+      - name: empty-blocks
+      - name: early-return
+      - name: unused-imports
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-rules:
+    - path: "_test.go"
+      text: "should have comment"   # игнорировать комменты в тестах

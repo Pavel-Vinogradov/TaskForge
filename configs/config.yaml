@@ -1,0 +1,36 @@
+app:
+  name: "Task Management"
+  version: "1.0.0"
+  port: ${APP_PORT}
+  read_timeout: 30s
+  write_timeout: 30s
+
+database:
+  host: ${DB_HOST}
+  port: ${DB_PORT}
+  name: ${DB_NAME}
+  user: ${DB_USER}
+  password: ${DB_PASSWORD}
+  max_idle_conns: 10
+  max_open_conns: 100
+  conn_max_lifetime: 1h
+
+redis:
+  addr: ${REDIS_ADDR}
+  password: ${REDIS_PASSWORD}
+  db: ${REDIS_DB}
+  pool_size: 10
+
+log:
+  level: ${LOG_LEVEL}
+  json: false
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 24h
+
+cache:
+  ttl: 5m
+
+rate_limit:
+  requests_per_minute: 100

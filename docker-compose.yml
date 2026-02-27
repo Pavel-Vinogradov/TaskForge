@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  mariadb:
+    image: mariadb:10.11
+    container_name: task_manager_db
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+      MARIADB_DATABASE: ${DB_NAME:-taskmanager}
+      MARIADB_USER: ${DB_USER:-taskuser}
+      MARIADB_PASSWORD: ${DB_PASSWORD:-taskpass}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - mariadb_:/var/lib/mysql
+      - ./config/mariadb.cnf:/etc/mysql/conf.d/custom.cnf:ro
+    networks:
+      - app_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: task_manager_redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_:/data
+    networks:
+      - app_network
+
+volumes:
+  mariadb_:
+    driver: local
+  redis_:
+    driver: local
+
+networks:
+  app_network:
+    driver: bridge
