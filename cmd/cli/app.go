@@ -27,6 +27,7 @@ type App struct {
 
 func NewApp(servicesConfig *config.Services) (*App, error) {
 	authRepo := repository.NewAuthRepository(servicesConfig.DB)
+	teamRepo := repository.NewTeamRepository(servicesConfig.DB)
 
 	jwtManager := jwt.NewManager(
 		servicesConfig.App.Config.JWT.Secret,
@@ -34,7 +35,8 @@ func NewApp(servicesConfig *config.Services) (*App, error) {
 	)
 
 	useCases := &config.UseCases{
-		Auth: usecase.NewAuthUseCase(authRepo),
+		Auth:  usecase.NewAuthUseCase(authRepo),
+		Teams: usecase.NewTeamUseCase(teamRepo),
 	}
 
 	mws := &config.Middlewares{
@@ -75,9 +77,9 @@ func (app *App) RunApi(ctx context.Context) error {
 		protected := api.Group("")
 		protected.Use(app.Middlewares.JWT.JWTAuthMiddleware())
 		{
-			api.POST("/teams", teamHandler.CreateHandler)
-			api.GET("/teams", teamHandler.ListHandler)
-			api.POST("/teams/:id/invite", teamHandler.InviteHandler)
+			api.POST("/teams", teamHandler.CreateTeam)
+			api.GET("/teams", teamHandler.ListTeams)
+			api.POST("/teams/:id/invite", teamHandler.InviteUser)
 
 			api.POST("/tasks", taskHandler.CreateTask)
 			api.GET("/tasks", taskHandler.ListTask)

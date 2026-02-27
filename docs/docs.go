@@ -118,6 +118,168 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/v1/teams": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает список команд, в которых состоит пользователь",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "teams"
+                ],
+                "summary": "Получить команды пользователя",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/team.ListTeamsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Создает новую команду и делает пользователя владельцем",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "teams"
+                ],
+                "summary": "Создать команду",
+                "parameters": [
+                    {
+                        "description": "Данные для создания команды",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/team.CreateTeamRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/team.CreateTeamResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/teams/{id}/invite": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Приглашает пользователя в команду (только для owner/admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "teams"
+                ],
+                "summary": "Пригласить в команду",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID команды",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Данные для приглашения",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/team.InviteUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/team.InviteUserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -168,6 +330,114 @@ const docTemplate = `{
                     "type": "integer"
                 }
             }
+        },
+        "team.CreateTeamRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 3,
+                    "example": "My Team"
+                }
+            }
+        },
+        "team.CreateTeamResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-01-01T12:00:00Z"
+                },
+                "created_by": {
+                    "type": "integer",
+                    "example": 123
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "name": {
+                    "type": "string",
+                    "example": "My Team"
+                },
+                "role": {
+                    "type": "string",
+                    "example": "owner"
+                }
+            }
+        },
+        "team.InviteUserRequest": {
+            "type": "object",
+            "required": [
+                "user_id"
+            ],
+            "properties": {
+                "user_id": {
+                    "type": "integer",
+                    "example": 456
+                }
+            }
+        },
+        "team.InviteUserResponse": {
+            "type": "object",
+            "properties": {
+                "joined_at": {
+                    "type": "string",
+                    "example": "2024-01-01T12:00:00Z"
+                },
+                "role": {
+                    "type": "string",
+                    "example": "member"
+                },
+                "team_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "user_id": {
+                    "type": "integer",
+                    "example": 456
+                }
+            }
+        },
+        "team.ListTeamsResponse": {
+            "type": "object",
+            "properties": {
+                "teams": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/team.TeamInfo"
+                    }
+                }
+            }
+        },
+        "team.TeamInfo": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-01-01T10:00:00Z"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "joined_at": {
+                    "type": "string",
+                    "example": "2024-01-01T12:00:00Z"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "My Team"
+                },
+                "role": {
+                    "type": "string",
+                    "example": "member"
+                }
+            }
         }
     }
 }`
@@ -176,7 +446,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "localhost:8080",
-	BasePath:         "/api/v1",
+	BasePath:         "",
 	Schemes:          []string{},
 	Title:            "TaskForge API",
 	Description:      "API для системы управления задачами",
