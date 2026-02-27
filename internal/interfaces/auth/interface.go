@@ -19,6 +19,6 @@ type ResponseAuth struct {
 }
 
 type UseCaseAuth interface {
-	Register(ctx context.Context, req RegisterRequest) (*ResponseAuth, error)
-	Login(ctx context.Context, req LoginRequest) (*ResponseAuth, error)
+	Register(ctx context.Context, req RegisterRequest) (int, error)
+	Login(ctx context.Context, req LoginRequest) (int, error)
 }

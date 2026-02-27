@@ -67,6 +67,19 @@ func LoadConfig() AppConfig {
 		}
 	}
 
+	// JWT configuration
+	if viper.GetString("jwt.secret") != "" {
+		expiration := viper.GetDuration("jwt.expiration")
+		if expiration == 0 {
+			expiration = 24 * time.Hour
+		}
+
+		cfg.JWT = &JWTConfig{
+			Secret:     expandEnv(viper.GetString("jwt.secret")),
+			Expiration: expiration,
+		}
+	}
+
 	return cfg
 }
 
@@ -86,6 +99,10 @@ func setDefaults() {
 	viper.SetDefault("redis.password", "")
 	viper.SetDefault("redis.db", 0)
 	viper.SetDefault("redis.pool_size", 10)
+
+	// JWT defaults
+	viper.SetDefault("jwt.secret", "")
+	viper.SetDefault("jwt.expiration", "24h")
 
 	// Cache defaults
 	viper.SetDefault("cache.ttl", "5m")

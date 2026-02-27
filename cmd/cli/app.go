@@ -6,6 +6,7 @@ import (
 	"TaskForge/internal/infrastructure/repository"
 	"TaskForge/internal/middleware"
 	"TaskForge/internal/usecase"
+	"TaskForge/pkg/jwt"
 	"context"
 	"errors"
 	"net/http"
@@ -27,13 +28,18 @@ type App struct {
 func NewApp(servicesConfig *config.Services) (*App, error) {
 	authRepo := repository.NewAuthRepository(servicesConfig.DB)
 
+	jwtManager := jwt.NewManager(
+		servicesConfig.App.Config.JWT.Secret,
+		servicesConfig.App.Config.JWT.Expiration,
+	)
+
 	useCases := &config.UseCases{
 		Auth: usecase.NewAuthUseCase(authRepo),
 	}
 
 	mws := &config.Middlewares{
 		Cors: middleware.CorsMiddleware{},
-		JWT:  middleware.JWTAuthMiddleware{},
+		JWT:  middleware.NewJWTAuthMiddleware(jwtManager),
 	}
 
 	app := &App{
@@ -52,7 +58,15 @@ func (app *App) RunApi(ctx context.Context) error {
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	authHandler := handler.NewAuthHandler(app.UseCases.Auth)
+	// Создаем JWT менеджер для handler
+	jwtManager := jwt.NewManager(
+		app.Services.App.Config.JWT.Secret,
+		app.Services.App.Config.JWT.Expiration,
+	)
+
+	authHandler := handler.NewAuthHandler(app.UseCases.Auth, jwtManager)
+	taskHandler := handler.NewTaskHandler(app.UseCases.Tasks)
+	teamHandler := handler.NewTeamHandler(app.UseCases.Teams)
 	api := r.Group("/api/v1")
 	{
 		api.POST("/register", authHandler.Register)
@@ -61,14 +75,14 @@ func (app *App) RunApi(ctx context.Context) error {
 		protected := api.Group("")
 		protected.Use(app.Middlewares.JWT.JWTAuthMiddleware())
 		{
-			//api.POST("/teams", app.UseCases.Teams.CreateHandler)
-			//api.GET("/teams", app.UseCases.Teams.ListHandler)
-			//api.POST("/teams/:id/invite", app.UseCases.Teams.InviteHandler)
-			//
-			//api.POST("/tasks", app.UseCases.Tasks.CreateHandler)
-			//api.GET("/tasks", app.UseCases.Tasks.ListHandler)
-			//api.PUT("/tasks/:id", app.UseCases.Tasks.UpdateHandler)
-			//api.GET("/tasks/:id/history", app.UseCases.Tasks.HistoryHandler)
+			api.POST("/teams", teamHandler.CreateHandler)
+			api.GET("/teams", teamHandler.ListHandler)
+			api.POST("/teams/:id/invite", teamHandler.InviteHandler)
+
+			api.POST("/tasks", taskHandler.CreateTask)
+			api.GET("/tasks", taskHandler.ListTask)
+			api.PUT("/tasks/:id", taskHandler.UpdateTask)
+			api.GET("/tasks/:id/history", taskHandler.HistoryTask)
 		}
 
 	}

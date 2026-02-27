@@ -2,17 +2,22 @@ package handler
 
 import (
 	"TaskForge/internal/interfaces/auth"
+	"TaskForge/pkg/jwt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 type AuthHandler struct {
-	usecase auth.UseCaseAuth
+	useCase    auth.UseCaseAuth
+	jwtManager *jwt.Manager
 }
 
-func NewAuthHandler(u auth.UseCaseAuth) *AuthHandler {
-	return &AuthHandler{usecase: u}
+func NewAuthHandler(u auth.UseCaseAuth, jwtManager *jwt.Manager) *AuthHandler {
+	return &AuthHandler{
+		useCase:    u,
+		jwtManager: jwtManager,
+	}
 }
 
 // Register godoc
@@ -33,13 +38,22 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.usecase.Register(c.Request.Context(), req)
+	userID, err := h.useCase.Register(c.Request.Context(), req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, resp)
+	token, err := h.jwtManager.Generate(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, auth.ResponseAuth{
+		UserID: userID,
+		Token:  token,
+	})
 }
 
 // Login godoc
@@ -60,11 +74,20 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.usecase.Login(c.Request.Context(), req)
+	userID, err := h.useCase.Login(c.Request.Context(), req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	token, err := h.jwtManager.Generate(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, auth.ResponseAuth{
+		UserID: userID,
+		Token:  token,
+	})
 }

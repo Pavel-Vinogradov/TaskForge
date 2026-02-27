@@ -19,6 +19,7 @@ import (
 type AppConfig struct {
 	DB          *DBConfig
 	Redis       *RedisConfig
+	JWT         *JWTConfig
 	Middlewares *Middlewares
 }
 
@@ -37,7 +38,7 @@ type UseCases struct {
 
 type Middlewares struct {
 	Cors middleware.CorsMiddleware
-	JWT  middleware.JWTAuthMiddleware
+	JWT  *middleware.JWTAuthMiddleware
 }
 
 type AppServiceError string
@@ -61,6 +62,12 @@ type RedisConfig struct {
 	Password string
 	DB       int
 	TTL      time.Duration
+}
+
+// JWTConfig - настройки JWT
+type JWTConfig struct {
+	Secret     string
+	Expiration time.Duration
 }
 
 // HttpServer - HTTP сервер

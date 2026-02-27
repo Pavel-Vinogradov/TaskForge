@@ -40,7 +40,7 @@ func (r *authRepository) CreateUser(ctx context.Context, user *entity.User) (int
 }
 
 func (r *authRepository) GetUserByEmail(ctx context.Context, email string) (*entity.User, error) {
-	query := sq.Select("id", "username", "email", "password").
+	query := sq.Select("id", "name", "email", "password").
 		From("users").
 		Where(sq.Eq{"email": email}).
 		RunWith(r.db).

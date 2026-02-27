@@ -8,7 +8,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type JWTAuthMiddleware struct{}
+type JWTAuthMiddleware struct {
+	jwtManager *jwt.Manager
+}
+
+func NewJWTAuthMiddleware(jwtManager *jwt.Manager) *JWTAuthMiddleware {
+	return &JWTAuthMiddleware{jwtManager: jwtManager}
+}
 
 // JWTAuthMiddleware проверяет токен
 func (m *JWTAuthMiddleware) JWTAuthMiddleware() gin.HandlerFunc {
@@ -28,7 +34,7 @@ func (m *JWTAuthMiddleware) JWTAuthMiddleware() gin.HandlerFunc {
 		}
 
 		tokenString := parts[1]
-		claims, err := jwt.ValidateJWT(tokenString)
+		claims, err := m.jwtManager.Validate(tokenString)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
 			c.Abort()

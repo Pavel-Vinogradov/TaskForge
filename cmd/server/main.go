@@ -4,7 +4,7 @@ package main
 // @version 1.0
 // @description API для системы управления задачами
 // @host localhost:8080
-// @BasePath /api/v1
+// @BasePath
 
 import (
 	"TaskForge/cmd/cli"
@@ -16,6 +16,8 @@ import (
 
 	_ "TaskForge/docs"
 
+	_ "github.com/golang-migrate/migrate/v4/database/mysql"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 )
