@@ -60,7 +60,6 @@ func (app *App) RunApi(ctx context.Context) error {
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	// Создаем JWT менеджер для handler
 	jwtManager := jwt.NewManager(
 		app.Services.App.Config.JWT.Secret,
 		app.Services.App.Config.JWT.Expiration,
@@ -77,14 +76,14 @@ func (app *App) RunApi(ctx context.Context) error {
 		protected := api.Group("")
 		protected.Use(app.Middlewares.JWT.JWTAuthMiddleware())
 		{
-			api.POST("/teams", teamHandler.CreateTeam)
-			api.GET("/teams", teamHandler.ListTeams)
-			api.POST("/teams/:id/invite", teamHandler.InviteUser)
+			protected.POST("/teams", teamHandler.CreateTeam)
+			protected.GET("/teams", teamHandler.ListTeams)
+			protected.POST("/teams/:id/invite", teamHandler.InviteUser)
 
-			api.POST("/tasks", taskHandler.CreateTask)
-			api.GET("/tasks", taskHandler.ListTask)
-			api.PUT("/tasks/:id", taskHandler.UpdateTask)
-			api.GET("/tasks/:id/history", taskHandler.HistoryTask)
+			protected.POST("/tasks", taskHandler.CreateTask)
+			protected.GET("/tasks", taskHandler.ListTask)
+			protected.PUT("/tasks/:id", taskHandler.UpdateTask)
+			protected.GET("/tasks/:id/history", taskHandler.HistoryTask)
 		}
 
 	}

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"TaskForge/internal/domain/entity"
+	"TaskForge/internal/domain/repos"
 	"TaskForge/internal/interfaces/team"
 	"context"
 	"database/sql"
@@ -16,7 +17,7 @@ type teamRepository struct {
 	db *sql.DB
 }
 
-func NewTeamRepository(db *sql.DB) team.RepositoryTeam {
+func NewTeamRepository(db *sql.DB) repos.TeamRepository {
 	return &teamRepository{db: db}
 }
 

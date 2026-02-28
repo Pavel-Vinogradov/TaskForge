@@ -19,7 +19,7 @@ func NewAuthRepository(db *sql.DB) repos.AuthRepository {
 	return &authRepository{db: db}
 }
 
-func (r *authRepository) CreateUser(ctx context.Context, user *entity.User) (int, error) {
+func (r *authRepository) CreateUser(ctx context.Context, user *entity.User) (*entity.User, error) {
 	query := sq.Insert("users").
 		Columns("name", "email", "password", "created_at").
 		Values(user.Name, user.Email, user.Password, user.CreatedAt).
@@ -28,15 +28,16 @@ func (r *authRepository) CreateUser(ctx context.Context, user *entity.User) (int
 
 	res, err := query.ExecContext(ctx)
 	if err != nil {
-		return 0, fmt.Errorf("failed to insert user: %w", err)
+		return nil, fmt.Errorf("failed to insert user: %w", err)
 	}
 
 	id, err := res.LastInsertId()
 	if err != nil {
-		return 0, fmt.Errorf("failed to get last insert id: %w", err)
+		return nil, fmt.Errorf("failed to get last insert id: %w", err)
 	}
 
-	return int(id), nil
+	user.ID = int(id)
+	return user, nil
 }
 
 func (r *authRepository) GetUserByEmail(ctx context.Context, email string) (*entity.User, error) {

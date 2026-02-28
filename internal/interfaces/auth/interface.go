@@ -1,6 +1,10 @@
 package auth
 
-import "context"
+import (
+	"TaskForge/internal/domain/entity"
+	"context"
+	"time"
+)
 
 type RegisterRequest struct {
 	Username string `json:"username" binding:"required,min=3"`
@@ -18,7 +22,14 @@ type ResponseAuth struct {
 	Token  string `json:"token"`
 }
 
+type ResponseRegister struct {
+	UserID    int       `json:"user_id"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type UseCaseAuth interface {
-	Register(ctx context.Context, req RegisterRequest) (int, error)
+	Register(ctx context.Context, req RegisterRequest) (*entity.User, error)
 	Login(ctx context.Context, req LoginRequest) (int, error)
 }

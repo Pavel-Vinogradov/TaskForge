@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"TaskForge/internal/domain/entity"
+	"TaskForge/internal/domain/repos"
 	"TaskForge/internal/interfaces/team"
 	"context"
 	"errors"
@@ -9,10 +10,10 @@ import (
 )
 
 type TeamUseCase struct {
-	repo team.RepositoryTeam
+	repo repos.TeamRepository
 }
 
-func NewTeamUseCase(repo team.RepositoryTeam) *TeamUseCase {
+func NewTeamUseCase(repo repos.TeamRepository) *TeamUseCase {
 	return &TeamUseCase{repo: repo}
 }
 
@@ -55,15 +56,15 @@ func (uc *TeamUseCase) CreateTeam(ctx context.Context, req team.CreateTeamReques
 	}, nil
 }
 
-func (uc *TeamUseCase) ListTeams(ctx context.Context) (team.ListTeamsResponse, error) {
+func (uc *TeamUseCase) ListTeams(ctx context.Context) ([]team.TeamInfo, error) {
 	userID, ok := ctx.Value("user_id").(int)
 	if !ok {
-		return team.ListTeamsResponse{}, errors.New("user not authenticated")
+		return nil, errors.New("user not authenticated")
 	}
 
 	teams, err := uc.repo.GetUserTeams(ctx, userID)
 	if err != nil {
-		return team.ListTeamsResponse{}, err
+		return nil, err
 	}
 
 	var teamInfos []team.TeamInfo
@@ -77,9 +78,7 @@ func (uc *TeamUseCase) ListTeams(ctx context.Context) (team.ListTeamsResponse, e
 		})
 	}
 
-	return team.ListTeamsResponse{
-		Teams: teamInfos,
-	}, nil
+	return teamInfos, nil
 }
 
 func (uc *TeamUseCase) InviteUser(ctx context.Context, teamID int, req team.InviteUserRequest) (team.InviteUserResponse, error) {

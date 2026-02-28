@@ -2,6 +2,7 @@ package handler
 
 import (
 	"TaskForge/internal/interfaces/team"
+	"context"
 	"fmt"
 	"net/http"
 
@@ -29,13 +30,21 @@ func NewTeamHandler(u team.UseCaseTeam) *TeamHandler {
 // @Security BearerAuth
 // @Router /api/v1/teams [post]
 func (h *TeamHandler) CreateTeam(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
+		return
+	}
+
+	ctx := context.WithValue(c.Request.Context(), "user_id", userID)
+
 	var req team.CreateTeamRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	res, err := h.usecase.CreateTeam(c.Request.Context(), req)
+	res, err := h.usecase.CreateTeam(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -53,7 +62,16 @@ func (h *TeamHandler) CreateTeam(c *gin.Context) {
 // @Security BearerAuth
 // @Router /api/v1/teams [get]
 func (h *TeamHandler) ListTeams(c *gin.Context) {
-	res, err := h.usecase.ListTeams(c.Request.Context())
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
+		return
+	}
+
+	// Set user_id in request context for usecase
+	ctx := context.WithValue(c.Request.Context(), "user_id", userID)
+
+	res, err := h.usecase.ListTeams(ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -76,6 +94,14 @@ func (h *TeamHandler) ListTeams(c *gin.Context) {
 // @Security BearerAuth
 // @Router /api/v1/teams/{id}/invite [post]
 func (h *TeamHandler) InviteUser(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
+		return
+	}
+
+	ctx := context.WithValue(c.Request.Context(), "user_id", userID)
+
 	teamIDStr := c.Param("id")
 	teamID := 0
 	if _, err := fmt.Sscanf(teamIDStr, "%d", &teamID); err != nil {
@@ -89,7 +115,7 @@ func (h *TeamHandler) InviteUser(c *gin.Context) {
 		return
 	}
 
-	res, err := h.usecase.InviteUser(c.Request.Context(), teamID, req)
+	res, err := h.usecase.InviteUser(ctx, teamID, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

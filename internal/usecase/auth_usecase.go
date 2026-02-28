@@ -21,18 +21,18 @@ func NewAuthUseCase(repo repos.AuthRepository) *AuthUseCase {
 	}
 }
 
-func (u *AuthUseCase) Register(ctx context.Context, req auth.RegisterRequest) (int, error) {
+func (u *AuthUseCase) Register(ctx context.Context, req auth.RegisterRequest) (*entity.User, error) {
 	existing, err := u.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	if existing != nil {
-		return 0, errors.New("user already exists")
+		return nil, errors.New("user already exists")
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	user := &entity.User{
@@ -42,12 +42,12 @@ func (u *AuthUseCase) Register(ctx context.Context, req auth.RegisterRequest) (i
 		CreatedAt: time.Now(),
 	}
 
-	id, err := u.repo.CreateUser(ctx, user)
+	us, err := u.repo.CreateUser(ctx, user)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	return id, nil
+	return us, nil
 }
 
 func (u *AuthUseCase) Login(ctx context.Context, req auth.LoginRequest) (int, error) {

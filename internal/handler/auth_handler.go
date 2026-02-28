@@ -38,21 +38,17 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	userID, err := h.useCase.Register(c.Request.Context(), req)
+	user, err := h.useCase.Register(c.Request.Context(), req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	token, err := h.jwtManager.Generate(userID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusCreated, auth.ResponseAuth{
-		UserID: userID,
-		Token:  token,
+	c.JSON(http.StatusCreated, auth.ResponseRegister{
+		UserID:    user.ID,
+		Name:      user.Name,
+		Email:     user.Email,
+		CreatedAt: user.CreatedAt,
 	})
 }
 

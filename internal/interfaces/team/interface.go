@@ -18,10 +18,6 @@ type CreateTeamResponse struct {
 	CreatedAt time.Time `json:"created_at" example:"2024-01-01T12:00:00Z"`
 }
 
-type ListTeamsResponse struct {
-	Teams []TeamInfo `json:"teams"`
-}
-
 type TeamInfo struct {
 	ID        int       `json:"id" example:"1"`
 	Name      string    `json:"name" example:"My Team"`
@@ -43,15 +39,8 @@ type InviteUserResponse struct {
 
 type UseCaseTeam interface {
 	CreateTeam(ctx context.Context, req CreateTeamRequest) (CreateTeamResponse, error)
-	ListTeams(ctx context.Context) (ListTeamsResponse, error)
+	ListTeams(ctx context.Context) ([]TeamInfo, error)
 	InviteUser(ctx context.Context, teamID int, req InviteUserRequest) (InviteUserResponse, error)
-}
-
-type RepositoryTeam interface {
-	CreateTeam(ctx context.Context, team entity.Team) (entity.Team, error)
-	GetUserTeams(ctx context.Context, userID int) ([]TeamWithMembership, error)
-	GetTeamMember(ctx context.Context, teamID, userID int) (entity.TeamMember, error)
-	AddTeamMember(ctx context.Context, member entity.TeamMember) error
 }
 
 type TeamWithMembership struct {
