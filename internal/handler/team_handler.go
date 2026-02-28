@@ -1,8 +1,8 @@
 package handler
 
 import (
+	"TaskForge/internal/interfaces/common"
 	"TaskForge/internal/interfaces/team"
-	"context"
 	"fmt"
 	"net/http"
 
@@ -24,32 +24,27 @@ func NewTeamHandler(u team.UseCaseTeam) *TeamHandler {
 // @Accept json
 // @Produce json
 // @Param request body team.CreateTeamRequest true "Данные для создания команды"
-// @Success 201 {object} team.CreateTeamResponse
-// @Failure 400 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Success 201 {object} common.Response{data=team.CreateTeamResponse}
+// @Failure 400 {object} common.Response
+// @Failure 500 {object} common.Response
 // @Security BearerAuth
 // @Router /api/v1/teams [post]
 func (h *TeamHandler) CreateTeam(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
-		return
-	}
-
-	ctx := context.WithValue(c.Request.Context(), "user_id", userID)
-
 	var req team.CreateTeamRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		common.ErrorResponse(c, http.StatusBadRequest, err)
 		return
 	}
 
-	res, err := h.usecase.CreateTeam(ctx, req)
+	res, err := h.usecase.CreateTeam(c.Request.Context(), req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		common.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
-	c.JSON(http.StatusCreated, res)
+	c.JSON(http.StatusCreated, common.Response{
+		Success: true,
+		Data:    res,
+	})
 }
 
 // ListTeams получает список команд пользователя
@@ -57,26 +52,20 @@ func (h *TeamHandler) CreateTeam(c *gin.Context) {
 // @Description Возвращает список команд, в которых состоит пользователь
 // @Tags teams
 // @Produce json
-// @Success 200 {object} team.ListTeamsResponse
-// @Failure 500 {object} map[string]string
+// @Success 200 {object} common.Response{data=[]team.TeamInfo}
+// @Failure 500 {object} common.Response
 // @Security BearerAuth
 // @Router /api/v1/teams [get]
 func (h *TeamHandler) ListTeams(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
-		return
-	}
-
-	// Set user_id in request context for usecase
-	ctx := context.WithValue(c.Request.Context(), "user_id", userID)
-
-	res, err := h.usecase.ListTeams(ctx)
+	res, err := h.usecase.ListTeams(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		common.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
-	c.JSON(http.StatusOK, res)
+	c.JSON(http.StatusOK, common.Response{
+		Success: true,
+		Data:    res,
+	})
 }
 
 // InviteUser приглашает пользователя в команду
@@ -87,38 +76,33 @@ func (h *TeamHandler) ListTeams(c *gin.Context) {
 // @Produce json
 // @Param id path int true "ID команды"
 // @Param request body team.InviteUserRequest true "Данные для приглашения"
-// @Success 201 {object} team.InviteUserResponse
-// @Failure 400 {object} map[string]string
-// @Failure 403 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Success 201 {object} common.Response{data=team.InviteUserResponse}
+// @Failure 400 {object} common.Response
+// @Failure 403 {object} common.Response
+// @Failure 500 {object} common.Response
 // @Security BearerAuth
 // @Router /api/v1/teams/{id}/invite [post]
 func (h *TeamHandler) InviteUser(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
-		return
-	}
-
-	ctx := context.WithValue(c.Request.Context(), "user_id", userID)
-
 	teamIDStr := c.Param("id")
 	teamID := 0
 	if _, err := fmt.Sscanf(teamIDStr, "%d", &teamID); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid team id"})
+		common.ErrorResponse(c, http.StatusBadRequest, err)
 		return
 	}
 
 	var req team.InviteUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		common.ErrorResponse(c, http.StatusBadRequest, err)
 		return
 	}
 
-	res, err := h.usecase.InviteUser(ctx, teamID, req)
+	res, err := h.usecase.InviteUser(c.Request.Context(), teamID, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		common.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
-	c.JSON(http.StatusCreated, res)
+	c.JSON(http.StatusCreated, common.Response{
+		Success: true,
+		Data:    res,
+	})
 }

@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"TaskForge/internal/contextkeys"
 	"TaskForge/internal/domain/entity"
 	"TaskForge/internal/domain/repos"
 	"TaskForge/internal/interfaces/team"
@@ -18,7 +19,7 @@ func NewTeamUseCase(repo repos.TeamRepository) *TeamUseCase {
 }
 
 func (uc *TeamUseCase) CreateTeam(ctx context.Context, req team.CreateTeamRequest) (team.CreateTeamResponse, error) {
-	userID, ok := ctx.Value("user_id").(int)
+	userID, ok := ctx.Value(contextkeys.UserIDKey).(int)
 	if !ok {
 		return team.CreateTeamResponse{}, errors.New("user not authenticated")
 	}
@@ -57,7 +58,7 @@ func (uc *TeamUseCase) CreateTeam(ctx context.Context, req team.CreateTeamReques
 }
 
 func (uc *TeamUseCase) ListTeams(ctx context.Context) ([]team.TeamInfo, error) {
-	userID, ok := ctx.Value("user_id").(int)
+	userID, ok := ctx.Value(contextkeys.UserIDKey).(int)
 	if !ok {
 		return nil, errors.New("user not authenticated")
 	}

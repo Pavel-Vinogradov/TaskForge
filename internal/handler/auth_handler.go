@@ -2,6 +2,7 @@ package handler
 
 import (
 	"TaskForge/internal/interfaces/auth"
+	"TaskForge/internal/interfaces/common"
 	"TaskForge/pkg/jwt"
 	"net/http"
 
@@ -34,13 +35,13 @@ func NewAuthHandler(u auth.UseCaseAuth, jwtManager *jwt.Manager) *AuthHandler {
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req auth.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		common.ErrorResponse(c, http.StatusBadRequest, err)
 		return
 	}
 
 	user, err := h.useCase.Register(c.Request.Context(), req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		common.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -59,31 +60,34 @@ func (h *AuthHandler) Register(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param request body auth.LoginRequest true "Данные для входа"
-// @Success 200 {object} auth.ResponseAuth
-// @Failure 400 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Success 200 {object} common.Response{data=auth.ResponseAuth}
+// @Failure 400 {object} common.Response
+// @Failure 500 {object} common.Response
 // @Router /api/v1/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req auth.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		common.ErrorResponse(c, http.StatusBadRequest, err)
 		return
 	}
 
 	userID, err := h.useCase.Login(c.Request.Context(), req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		common.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
 
 	token, err := h.jwtManager.Generate(userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		common.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, auth.ResponseAuth{
-		UserID: userID,
-		Token:  token,
+	c.JSON(http.StatusOK, common.Response{
+		Success: true,
+		Data: auth.ResponseAuth{
+			UserID: userID,
+			Token:  token,
+		},
 	})
 }

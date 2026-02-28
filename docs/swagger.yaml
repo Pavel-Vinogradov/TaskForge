@@ -32,6 +32,16 @@ definitions:
       user_id:
         type: integer
     type: object
+  common.Response:
+    properties:
+      data: {}
+      error:
+        type: string
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
   team.CreateTeamRequest:
     properties:
       name:
@@ -83,13 +93,6 @@ definitions:
         example: 456
         type: integer
     type: object
-  team.ListTeamsResponse:
-    properties:
-      teams:
-        items:
-          $ref: '#/definitions/team.TeamInfo'
-        type: array
-    type: object
   team.TeamInfo:
     properties:
       created_at:
@@ -133,19 +136,20 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/auth.ResponseAuth'
+            allOf:
+            - $ref: '#/definitions/common.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/auth.ResponseAuth'
+              type: object
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/common.Response'
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/common.Response'
       summary: Аутентификация пользователя
       tags:
       - auth
@@ -192,13 +196,18 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/team.ListTeamsResponse'
+            allOf:
+            - $ref: '#/definitions/common.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/team.TeamInfo'
+                  type: array
+              type: object
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/common.Response'
       security:
       - BearerAuth: []
       summary: Получить команды пользователя
@@ -221,19 +230,20 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/team.CreateTeamResponse'
+            allOf:
+            - $ref: '#/definitions/common.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/team.CreateTeamResponse'
+              type: object
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/common.Response'
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/common.Response'
       security:
       - BearerAuth: []
       summary: Создать команду
@@ -262,25 +272,24 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/team.InviteUserResponse'
+            allOf:
+            - $ref: '#/definitions/common.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/team.InviteUserResponse'
+              type: object
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/common.Response'
         "403":
           description: Forbidden
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/common.Response'
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/common.Response'
       security:
       - BearerAuth: []
       summary: Пригласить в команду

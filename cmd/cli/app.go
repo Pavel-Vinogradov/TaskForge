@@ -40,8 +40,9 @@ func NewApp(servicesConfig *config.Services) (*App, error) {
 	}
 
 	mws := &config.Middlewares{
-		Cors: middleware.CorsMiddleware{},
-		JWT:  middleware.NewJWTAuthMiddleware(jwtManager),
+		Cors:        middleware.CorsMiddleware{},
+		JWT:         middleware.NewJWTAuthMiddleware(jwtManager),
+		UserContext: middleware.UserContextMiddleware{},
 	}
 
 	app := &App{
@@ -75,6 +76,7 @@ func (app *App) RunApi(ctx context.Context) error {
 
 		protected := api.Group("")
 		protected.Use(app.Middlewares.JWT.JWTAuthMiddleware())
+		protected.Use(app.Middlewares.UserContext.UserContextMiddleware())
 		{
 			protected.POST("/teams", teamHandler.CreateTeam)
 			protected.GET("/teams", teamHandler.ListTeams)

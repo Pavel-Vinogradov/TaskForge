@@ -37,8 +37,9 @@ type UseCases struct {
 }
 
 type Middlewares struct {
-	Cors middleware.CorsMiddleware
-	JWT  *middleware.JWTAuthMiddleware
+	Cors        middleware.CorsMiddleware
+	JWT         *middleware.JWTAuthMiddleware
+	UserContext middleware.UserContextMiddleware
 }
 
 type AppServiceError string
