@@ -8,5 +8,4 @@ type TaskComment struct {
 	UserID    int
 	Comment   string
 	CreatedAt time.Time
-	UpdatedAt time.Time
 }

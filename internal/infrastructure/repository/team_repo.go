@@ -56,7 +56,9 @@ func (r *teamRepository) GetUserTeams(ctx context.Context, userID int) ([]team.T
 	if err != nil {
 		return nil, fmt.Errorf("failed to query user teams: %w", err)
 	}
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		_ = rows.Close()
+	}(rows)
 
 	var teams []team.TeamWithMembership
 	for rows.Next() {
