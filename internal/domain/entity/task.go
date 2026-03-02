@@ -3,13 +3,13 @@ package entity
 import "time"
 
 type Task struct {
-	ID          int
-	Title       string
-	Description string
-	Status      TaskStatus
-	TeamID      int
-	CreatedBy   int
-	AssigneeID  int
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	Id          int        `json:"id"`
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
+	Status      TaskStatus `json:"status"`
+	TeamID      int        `json:"team_id"`
+	CreatedBy   int        `json:"created_by"`
+	AssigneeID  int        `json:"assignee_id"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
 }

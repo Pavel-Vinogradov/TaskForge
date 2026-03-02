@@ -74,7 +74,7 @@ func (h *TeamHandler) ListTeams(c *gin.Context) {
 // @Tags teams
 // @Accept json
 // @Produce json
-// @Param id path int true "ID команды"
+// @Param id path int true "Id команды"
 // @Param request body team.InviteUserRequest true "Данные для приглашения"
 // @Success 201 {object} common.Response{data=team.InviteUserResponse}
 // @Failure 400 {object} common.Response

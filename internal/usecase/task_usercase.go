@@ -1,0 +1,99 @@
+package usecase
+
+import (
+	"TaskForge/internal/contextkeys"
+	"TaskForge/internal/domain/entity"
+	"TaskForge/internal/domain/repos"
+	"TaskForge/internal/interfaces/task"
+	"TaskForge/internal/interfaces/task_history"
+	"context"
+	"errors"
+	"time"
+)
+
+type TaskUseCase struct {
+	repo      repos.TaskRepository
+	observers []task_history.TaskObserver
+}
+
+func NewTaskUseCase(repo repos.TaskRepository) *TaskUseCase {
+	return &TaskUseCase{
+		repo:      repo,
+		observers: []task_history.TaskObserver{},
+	}
+}
+
+func (uc *TaskUseCase) AddObserver(observer task_history.TaskObserver) {
+	uc.observers = append(uc.observers, observer)
+}
+
+func (uc *TaskUseCase) CreateTask(ctx context.Context, req task.CreateTaskRequest) (task.ResponseTask, error) {
+	userID, ok := ctx.Value(contextkeys.UserIDKey).(int)
+	if !ok {
+		return task.ResponseTask{}, errors.New("user not authenticated")
+	}
+
+	taskEntity := entity.Task{
+		Title:       req.Title,
+		Description: req.Description,
+		Status:      entity.StatusTodo,
+		TeamID:      req.TeamID,
+		CreatedBy:   userID,
+		AssigneeID:  req.AssigneeID,
+		CreatedAt:   time.Now(),
+	}
+
+	createdTask, err := uc.repo.CreateTask(ctx, taskEntity)
+	if err != nil {
+		return task.ResponseTask{}, err
+	}
+
+	for _, observer := range uc.observers {
+		observer.OnTaskCreated(ctx, createdTask, userID)
+	}
+
+	return task.ResponseTask{
+		ID:          createdTask.Id,
+		Title:       createdTask.Title,
+		Description: createdTask.Description,
+		Status:      string(createdTask.Status),
+		TeamID:      createdTask.TeamID,
+		CreatedBy:   createdTask.CreatedBy,
+		AssigneeID:  createdTask.AssigneeID,
+		CreatedAt:   createdTask.CreatedAt,
+	}, nil
+}
+
+func (uc *TaskUseCase) ListTask(ctx context.Context, req task.TaskListRequest) (task.TaskListResult, error) {
+	_, ok := ctx.Value(contextkeys.UserIDKey).(int)
+	if !ok {
+		return task.TaskListResult{}, errors.New("user not authenticated")
+	}
+
+	filters := repos.TaskFilters{
+		TeamID:     req.TeamID,
+		Status:     req.Status,
+		AssigneeID: req.AssigneeID,
+		Page:       req.Page,
+		Limit:      req.Limit,
+	}
+
+	tasks, total, err := uc.repo.ListTasks(ctx, filters)
+	if err != nil {
+		return task.TaskListResult{}, err
+	}
+	return task.TaskListResult{
+		Tasks: tasks,
+		Total: total,
+	}, nil
+}
+
+func (uc *TaskUseCase) UpdateTask(ctx context.Context) (task.ResponseTask, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (uc *TaskUseCase) HistoryTask(ctx context.Context) (interface{}, error) {
+	//TODO implement me
+	panic("implement me")
+}

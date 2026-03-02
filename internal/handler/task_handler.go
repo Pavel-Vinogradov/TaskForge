@@ -16,6 +16,18 @@ func NewTaskHandler(u task.UseCaseTask) *TaskHandler {
 	return &TaskHandler{usecase: u}
 }
 
+// CreateTask godoc
+// @Summary Create a new task
+// @Description Creates a new task with the provided details. Requires authentication.
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Param request body task.CreateTaskRequest true "Task creation request"
+// @Success 201 {object} common.Response{Data=task.ResponseTask} "Task created successfully"
+// @Failure 400 {object} common.Response "Invalid request body"
+// @Failure 500 {object} common.Response "Internal server error"
+// @Security ApiKeyAuth
+// @Router /api/v1/tasks [post]
 func (h *TaskHandler) CreateTask(c *gin.Context) {
 	var req task.CreateTaskRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -28,19 +40,68 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 		common.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
-	c.JSON(http.StatusCreated, res)
+	c.JSON(http.StatusCreated, common.Response{
+		Success: true,
+		Data:    res,
+	})
 }
 
+// ListTask godoc
+// @Summary List tasks
+// @Description Retrieves a paginated list of tasks with optional filtering. Requires authentication.
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Param team_id query int"
+// @Param status query string"
+// @Param assignee_id query int"
+// @Param page query int "
+// @Param limit query int"
+// @Success 200 {object} common.PaginationResponse{Data=[]entity.Task} "Tasks retrieved successfully"
+// @Failure 400 {object} common.Response "Invalid query parameters"
+// @Failure 500 {object} common.Response "Internal server error"
+// @Security ApiKeyAuth
+// @Router /api/v1/tasks [get]
 func (h *TaskHandler) ListTask(c *gin.Context) {
-	res, err := h.usecase.ListTask(c.Request.Context())
+	var req task.TaskListRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		common.ErrorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+
+	if req.Page < 1 {
+		req.Page = 1
+	}
+	if req.Limit < 1 || req.Limit > 100 {
+		req.Limit = 10
+	}
+
+	res, err := h.usecase.ListTask(c.Request.Context(), req)
 	if err != nil {
 		common.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
-	c.JSON(http.StatusOK, res)
+	c.JSON(http.StatusOK, common.PaginationResponse{
+		Success: true,
+		Data:    res.Tasks,
+		Page:    req.Page,
+		Limit:   req.Limit,
+		Total:   int(res.Total),
+	})
 
 }
 
+// UpdateTask godoc
+// @Summary Update a task
+// @Description Updates an existing task. Requires authentication.
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Param id path int true "Task Id"
+// @Success 200 {object} task.ResponseTask "Task updated successfully"
+// @Failure 500 {object} common.Response "Internal server error"
+// @Security ApiKeyAuth
+// @Router /api/v1/tasks/{id} [put]
 func (h *TaskHandler) UpdateTask(c *gin.Context) {
 	res, err := h.usecase.UpdateTask(c.Request.Context())
 	if err != nil {
@@ -51,6 +112,17 @@ func (h *TaskHandler) UpdateTask(c *gin.Context) {
 
 }
 
+// HistoryTask godoc
+// @Summary Get task history
+// @Description Retrieves the history of changes for a specific task. Requires authentication.
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Param id path int true "Task Id"
+// @Success 200 {object} common.Response "Task history retrieved successfully"
+// @Failure 500 {object} common.Response "Internal server error"
+// @Security ApiKeyAuth
+// @Router /api/v1/tasks/{id}/history [get]
 func (h *TaskHandler) HistoryTask(c *gin.Context) {
 	res, err := h.usecase.HistoryTask(c.Request.Context())
 	if err != nil {

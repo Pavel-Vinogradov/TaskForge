@@ -28,15 +28,22 @@ type App struct {
 func NewApp(servicesConfig *config.Services) (*App, error) {
 	authRepo := repository.NewAuthRepository(servicesConfig.DB)
 	teamRepo := repository.NewTeamRepository(servicesConfig.DB)
+	taskRepo := repository.NewTaskRepository(servicesConfig.DB)
+	taskHistoryRepo := repository.NewTaskHistoryRepository(servicesConfig.DB)
 
 	jwtManager := jwt.NewManager(
 		servicesConfig.App.Config.JWT.Secret,
 		servicesConfig.App.Config.JWT.Expiration,
 	)
 
+	taskUC := usecase.NewTaskUseCase(taskRepo)
+	historyObserver := usecase.NewTaskHistoryObserver(taskHistoryRepo)
+	taskUC.AddObserver(historyObserver)
+
 	useCases := &config.UseCases{
 		Auth:  usecase.NewAuthUseCase(authRepo),
 		Teams: usecase.NewTeamUseCase(teamRepo),
+		Tasks: taskUC,
 	}
 
 	mws := &config.Middlewares{

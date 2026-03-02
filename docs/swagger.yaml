@@ -32,6 +32,22 @@ definitions:
       user_id:
         type: integer
     type: object
+  common.PaginationResponse:
+    properties:
+      data: {}
+      error:
+        type: string
+      limit:
+        type: integer
+      message:
+        type: string
+      page:
+        type: integer
+      success:
+        type: boolean
+      total:
+        type: integer
+    type: object
   common.Response:
     properties:
       data: {}
@@ -41,6 +57,86 @@ definitions:
         type: string
       success:
         type: boolean
+    type: object
+  entity.Task:
+    properties:
+      assigneeID:
+        type: integer
+      createdAt:
+        type: string
+      createdBy:
+        type: integer
+      description:
+        type: string
+      id:
+        type: integer
+      status:
+        $ref: '#/definitions/entity.TaskStatus'
+      teamID:
+        type: integer
+      title:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  entity.TaskStatus:
+    enum:
+    - todo
+    - in_progress
+    - done
+    type: string
+    x-enum-varnames:
+    - StatusTodo
+    - StatusInProgress
+    - StatusDone
+  task.CreateTaskRequest:
+    properties:
+      assignee_id:
+        example: 1
+        type: integer
+      description:
+        example: Description
+        minLength: 3
+        type: string
+      team_id:
+        example: 1
+        type: integer
+      title:
+        example: Task
+        maxLength: 100
+        minLength: 3
+        type: string
+    required:
+    - assignee_id
+    - team_id
+    - title
+    type: object
+  task.ResponseTask:
+    properties:
+      assignee_id:
+        example: 1
+        type: integer
+      created_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      created_by:
+        example: 1
+        type: integer
+      description:
+        example: Description
+        type: string
+      id:
+        example: 1
+        type: integer
+      status:
+        example: todo
+        type: string
+      team_id:
+        example: 1
+        type: integer
+      title:
+        example: Task
+        type: string
     type: object
   team.CreateTeamRequest:
     properties:
@@ -187,6 +283,151 @@ paths:
       summary: Регистрация нового пользователя
       tags:
       - auth
+  /api/v1/tasks:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a paginated list of tasks with optional filtering. Requires
+        authentication.
+      parameters:
+      - description: Filter by team ID
+        in: query
+        name: team_id
+        type: integer
+      - description: Filter by status (todo, in_progress, done)
+        in: query
+        name: status
+        type: string
+      - description: Filter by assignee ID
+        in: query
+        name: assignee_id
+        type: integer
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Items per page (default: 10, max: 100)'
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tasks retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.PaginationResponse'
+            - properties:
+                Data:
+                  items:
+                    $ref: '#/definitions/entity.Task'
+                  type: array
+              type: object
+        "400":
+          description: Invalid query parameters
+          schema:
+            $ref: '#/definitions/common.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/common.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: List tasks
+      tags:
+      - tasks
+    post:
+      consumes:
+      - application/json
+      description: Creates a new task with the provided details. Requires authentication.
+      parameters:
+      - description: Task creation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/task.CreateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Task created successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.Response'
+            - properties:
+                Data:
+                  $ref: '#/definitions/task.ResponseTask'
+              type: object
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/common.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/common.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new task
+      tags:
+      - tasks
+  /api/v1/tasks/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing task. Requires authentication.
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Task updated successfully
+          schema:
+            $ref: '#/definitions/task.ResponseTask'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/common.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Update a task
+      tags:
+      - tasks
+  /api/v1/tasks/{id}/history:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the history of changes for a specific task. Requires
+        authentication.
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Task history retrieved successfully
+          schema:
+            $ref: '#/definitions/common.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/common.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Get task history
+      tags:
+      - tasks
   /api/v1/teams:
     get:
       description: Возвращает список команд, в которых состоит пользователь
