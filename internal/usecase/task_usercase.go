@@ -7,21 +7,27 @@ import (
 	"TaskForge/internal/interfaces/task"
 	"TaskForge/internal/interfaces/task_history"
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
+
+	"github.com/go-redis/redis/v8"
 )
 
 type TaskUseCase struct {
 	repo        repos.TaskRepository
 	historyRepo repos.TaskHistoryRepository
 	observers   []task_history.TaskObserver
+	redis       *redis.Client
 }
 
-func NewTaskUseCase(repo repos.TaskRepository, historyRepo repos.TaskHistoryRepository) *TaskUseCase {
+func NewTaskUseCase(repo repos.TaskRepository, historyRepo repos.TaskHistoryRepository, redis *redis.Client) *TaskUseCase {
 	return &TaskUseCase{
 		repo:        repo,
 		historyRepo: historyRepo,
 		observers:   []task_history.TaskObserver{},
+		redis:       redis,
 	}
 }
 
@@ -72,6 +78,18 @@ func (uc *TaskUseCase) ListTask(ctx context.Context, req task.TaskListRequest) (
 		return task.TaskListResult{}, errors.New("user not authenticated")
 	}
 
+	if req.TeamID != nil {
+		cacheKey := fmt.Sprintf("team_tasks:%d:%d:%d:%v:%v",
+			*req.TeamID, req.Page, req.Limit, req.Status, req.AssigneeID)
+		cached, err := uc.redis.Get(ctx, cacheKey).Result()
+		if err == nil {
+			var result task.TaskListResult
+			if json.Unmarshal([]byte(cached), &result) == nil {
+				return result, nil
+			}
+		}
+	}
+
 	filters := task.TaskFilters{
 		TeamID:     req.TeamID,
 		Status:     req.Status,
@@ -84,10 +102,20 @@ func (uc *TaskUseCase) ListTask(ctx context.Context, req task.TaskListRequest) (
 	if err != nil {
 		return task.TaskListResult{}, err
 	}
-	return task.TaskListResult{
+
+	result := task.TaskListResult{
 		Tasks: tasks,
 		Total: total,
-	}, nil
+	}
+
+	if req.TeamID != nil {
+		cacheKey := fmt.Sprintf("team_tasks:%d:%d:%d:%v:%v",
+			*req.TeamID, req.Page, req.Limit, req.Status, req.AssigneeID)
+		jsonData, _ := json.Marshal(result)
+		uc.redis.SetEX(ctx, cacheKey, jsonData, 5*time.Minute)
+	}
+
+	return result, nil
 }
 
 func (uc *TaskUseCase) UpdateTask(ctx context.Context, taskID int, req task.UpdateTaskRequest) (task.ResponseTask, error) {
@@ -127,6 +155,11 @@ func (uc *TaskUseCase) UpdateTask(ctx context.Context, taskID int, req task.Upda
 		return task.ResponseTask{}, err
 	}
 
+	pattern := fmt.Sprintf("team_tasks:%d:*", updatedTask.TeamID)
+	keys, err := uc.redis.Keys(ctx, pattern).Result()
+	if len(keys) > 0 {
+		uc.redis.Del(ctx, keys...)
+	}
 	for _, observer := range uc.observers {
 		observer.OnTaskUpdated(ctx, originalTask, updatedTask, userID)
 	}
