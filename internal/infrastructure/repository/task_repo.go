@@ -3,6 +3,7 @@ package repository
 import (
 	"TaskForge/internal/domain/entity"
 	"TaskForge/internal/domain/repos"
+	"TaskForge/internal/interfaces/task"
 	"context"
 	"database/sql"
 	"fmt"
@@ -40,7 +41,7 @@ func (r *taskRepository) CreateTask(ctx context.Context, task entity.Task) (enti
 
 }
 
-func (r *taskRepository) ListTasks(ctx context.Context, filters repos.TaskFilters) ([]entity.Task, int64, error) {
+func (r *taskRepository) ListTasks(ctx context.Context, filters task.TaskFilters) ([]entity.Task, int64, error) {
 	countQuery := sq.Select("COUNT(*)").From("tasks")
 
 	if filters.TeamID != nil {
@@ -107,4 +108,41 @@ func (r *taskRepository) ListTasks(ctx context.Context, filters repos.TaskFilter
 	}
 
 	return tasks, total, nil
+}
+
+func (r *taskRepository) GetTaskByID(ctx context.Context, taskID int) (entity.Task, error) {
+	query := sq.Select("*").
+		From("tasks").
+		Where(sq.Eq{"id": taskID}).
+		RunWith(r.db).
+		PlaceholderFormat(sq.Question)
+
+	var task entity.Task
+	row := query.QueryRowContext(ctx)
+	err := row.Scan(&task.Id, &task.Title, &task.Description, &task.Status,
+		&task.TeamID, &task.CreatedBy, &task.AssigneeID, &task.CreatedAt, &task.UpdatedAt)
+	if err != nil {
+		return entity.Task{}, fmt.Errorf("failed to get task: %w", err)
+	}
+
+	return task, nil
+}
+
+func (r *taskRepository) UpdateTask(ctx context.Context, task entity.Task) (entity.Task, error) {
+	query := sq.Update("tasks").
+		Set("title", task.Title).
+		Set("description", task.Description).
+		Set("status", task.Status).
+		Set("assignee_id", task.AssigneeID).
+		Set("updated_at", task.UpdatedAt).
+		Where(sq.Eq{"id": task.Id}).
+		RunWith(r.db).
+		PlaceholderFormat(sq.Question)
+
+	_, err := query.ExecContext(ctx)
+	if err != nil {
+		return entity.Task{}, fmt.Errorf("failed to update task: %w", err)
+	}
+
+	return task, nil
 }

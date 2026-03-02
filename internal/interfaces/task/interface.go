@@ -37,9 +37,23 @@ type ResponseTask struct {
 	CreatedAt   time.Time `json:"created_at" example:"2024-01-01T00:00:00Z"`
 }
 
+type TaskFilters struct {
+	TeamID     *int
+	Status     *string
+	AssigneeID *int
+	Page       int
+	Limit      int
+}
+type UpdateTaskRequest struct {
+	Title       *string `json:"title,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Status      *string `json:"status,omitempty"`
+	AssigneeID  *int    `json:"assignee_id,omitempty"`
+}
+
 type UseCaseTask interface {
 	CreateTask(ctx context.Context, req CreateTaskRequest) (ResponseTask, error)
 	ListTask(ctx context.Context, req TaskListRequest) (TaskListResult, error)
-	UpdateTask(ctx context.Context) (ResponseTask, error)
-	HistoryTask(ctx context.Context) (interface{}, error)
+	UpdateTask(ctx context.Context, taskID int, req UpdateTaskRequest) (ResponseTask, error)
+	HistoryTask(ctx context.Context, taskID int) ([]entity.TaskHistory, error)
 }

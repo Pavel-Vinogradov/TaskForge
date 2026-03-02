@@ -7,4 +7,5 @@ import (
 
 type TaskHistoryRepository interface {
 	CreateHistory(ctx context.Context, history entity.TaskHistory) error
+	GetTaskHistory(ctx context.Context, taskID int) ([]entity.TaskHistory, error)
 }

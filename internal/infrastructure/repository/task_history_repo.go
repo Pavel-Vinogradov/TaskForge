@@ -32,3 +32,37 @@ func (r *taskHistoryRepository) CreateHistory(ctx context.Context, history entit
 
 	return nil
 }
+
+func (r *taskHistoryRepository) GetTaskHistory(ctx context.Context, taskID int) ([]entity.TaskHistory, error) {
+	query := sq.Select("*").
+		From("task_history").
+		Where(sq.Eq{"task_id": taskID}).
+		OrderBy("changed_at DESC").
+		RunWith(r.db).
+		PlaceholderFormat(sq.Question)
+
+	rows, err := query.QueryContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query task history: %w", err)
+	}
+	defer rows.Close()
+
+	var history []entity.TaskHistory
+	for rows.Next() {
+		var h entity.TaskHistory
+		err := rows.Scan(
+			&h.Id, &h.TaskID, &h.ChangedBy, &h.Field,
+			&h.OldValue, &h.NewValue, &h.ChangedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan task history: %w", err)
+		}
+		history = append(history, h)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating task history: %w", err)
+	}
+
+	return history, nil
+}

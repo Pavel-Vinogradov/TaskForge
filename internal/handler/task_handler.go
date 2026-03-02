@@ -3,7 +3,9 @@ package handler
 import (
 	"TaskForge/internal/interfaces/common"
 	"TaskForge/internal/interfaces/task"
+	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -52,11 +54,11 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 // @Tags tasks
 // @Accept json
 // @Produce json
-// @Param team_id query int"
-// @Param status query string"
-// @Param assignee_id query int"
-// @Param page query int "
-// @Param limit query int"
+// @Param team_id query int false "Filter by team ID"
+// @Param status query string false "Filter by status (todo, in_progress, done)"
+// @Param assignee_id query int false "Filter by assignee ID"
+// @Param page query int false "Page number (default: 1)"
+// @Param limit query int false "Items per page (default: 10, max: 100)"
 // @Success 200 {object} common.PaginationResponse{Data=[]entity.Task} "Tasks retrieved successfully"
 // @Failure 400 {object} common.Response "Invalid query parameters"
 // @Failure 500 {object} common.Response "Internal server error"
@@ -98,17 +100,41 @@ func (h *TaskHandler) ListTask(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Task Id"
-// @Success 200 {object} task.ResponseTask "Task updated successfully"
+// @Param request body task.UpdateTaskRequest false "Task update request"
+// @Success 200 {object} common.Response{data=task.ResponseTask}
+// @Failure 400 {object} common.Response "Invalid request body"
+// @Failure 403 {object} common.Response "Insufficient permissions"
+// @Failure 404 {object} common.Response "Task not found"
 // @Failure 500 {object} common.Response "Internal server error"
 // @Security ApiKeyAuth
 // @Router /api/v1/tasks/{id} [put]
 func (h *TaskHandler) UpdateTask(c *gin.Context) {
-	res, err := h.usecase.UpdateTask(c.Request.Context())
+	taskID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
+		common.ErrorResponse(c, http.StatusBadRequest, errors.New("invalid task id"))
+		return
+	}
+
+	var req task.UpdateTaskRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.ErrorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+
+	res, err := h.usecase.UpdateTask(c.Request.Context(), taskID, req)
+	if err != nil {
+		if errors.Is(err, errors.New("task not found")) {
+			common.ErrorResponse(c, http.StatusNotFound, err)
+			return
+		}
+		if errors.Is(err, errors.New("insufficient permissions")) {
+			common.ErrorResponse(c, http.StatusForbidden, err)
+			return
+		}
 		common.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
-	c.JSON(http.StatusOK, res)
+	c.JSON(http.StatusOK, common.Response{Success: true, Data: res})
 
 }
 
@@ -119,16 +145,33 @@ func (h *TaskHandler) UpdateTask(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Task Id"
-// @Success 200 {object} common.Response "Task history retrieved successfully"
+// @Success 200 {object} common.Response{data=[]entity.TaskHistory}
+// @Failure 400 {object} common.Response "Invalid task ID"
+// @Failure 403 {object} common.Response "Insufficient permissions"
+// @Failure 404 {object} common.Response "Task not found"
 // @Failure 500 {object} common.Response "Internal server error"
 // @Security ApiKeyAuth
 // @Router /api/v1/tasks/{id}/history [get]
 func (h *TaskHandler) HistoryTask(c *gin.Context) {
-	res, err := h.usecase.HistoryTask(c.Request.Context())
+	taskID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
+		common.ErrorResponse(c, http.StatusBadRequest, errors.New("invalid task id"))
+		return
+	}
+
+	res, err := h.usecase.HistoryTask(c.Request.Context(), taskID)
+	if err != nil {
+		if errors.Is(err, errors.New("task not found")) {
+			common.ErrorResponse(c, http.StatusNotFound, err)
+			return
+		}
+		if errors.Is(err, errors.New("insufficient permissions")) {
+			common.ErrorResponse(c, http.StatusForbidden, err)
+			return
+		}
 		common.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
-	c.JSON(http.StatusOK, res)
+	c.JSON(http.StatusOK, common.Response{Success: true, Data: res})
 
 }

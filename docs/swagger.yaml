@@ -60,11 +60,11 @@ definitions:
     type: object
   entity.Task:
     properties:
-      assigneeID:
+      assignee_id:
         type: integer
-      createdAt:
+      created_at:
         type: string
-      createdBy:
+      created_by:
         type: integer
       description:
         type: string
@@ -72,12 +72,29 @@ definitions:
         type: integer
       status:
         $ref: '#/definitions/entity.TaskStatus'
-      teamID:
+      team_id:
         type: integer
       title:
         type: string
-      updatedAt:
+      updated_at:
         type: string
+    type: object
+  entity.TaskHistory:
+    properties:
+      changed_at:
+        type: string
+      changed_by:
+        type: integer
+      field:
+        type: string
+      id:
+        type: integer
+      new_value:
+        type: string
+      old_value:
+        type: string
+      task_id:
+        type: integer
     type: object
   entity.TaskStatus:
     enum:
@@ -136,6 +153,17 @@ definitions:
         type: integer
       title:
         example: Task
+        type: string
+    type: object
+  task.UpdateTaskRequest:
+    properties:
+      assignee_id:
+        type: integer
+      description:
+        type: string
+      status:
+        type: string
+      title:
         type: string
     type: object
   team.CreateTeamRequest:
@@ -379,18 +407,40 @@ paths:
       - application/json
       description: Updates an existing task. Requires authentication.
       parameters:
-      - description: Task ID
+      - description: Task Id
         in: path
         name: id
         required: true
         type: integer
+      - description: Task update request
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/task.UpdateTaskRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: Task updated successfully
+          description: OK
           schema:
-            $ref: '#/definitions/task.ResponseTask'
+            allOf:
+            - $ref: '#/definitions/common.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/task.ResponseTask'
+              type: object
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/common.Response'
+        "403":
+          description: Insufficient permissions
+          schema:
+            $ref: '#/definitions/common.Response'
+        "404":
+          description: Task not found
+          schema:
+            $ref: '#/definitions/common.Response'
         "500":
           description: Internal server error
           schema:
@@ -407,7 +457,7 @@ paths:
       description: Retrieves the history of changes for a specific task. Requires
         authentication.
       parameters:
-      - description: Task ID
+      - description: Task Id
         in: path
         name: id
         required: true
@@ -416,7 +466,26 @@ paths:
       - application/json
       responses:
         "200":
-          description: Task history retrieved successfully
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/entity.TaskHistory'
+                  type: array
+              type: object
+        "400":
+          description: Invalid task ID
+          schema:
+            $ref: '#/definitions/common.Response'
+        "403":
+          description: Insufficient permissions
+          schema:
+            $ref: '#/definitions/common.Response'
+        "404":
+          description: Task not found
           schema:
             $ref: '#/definitions/common.Response'
         "500":
@@ -496,7 +565,7 @@ paths:
       - application/json
       description: Приглашает пользователя в команду (только для owner/admin)
       parameters:
-      - description: ID команды
+      - description: Id команды
         in: path
         name: id
         required: true

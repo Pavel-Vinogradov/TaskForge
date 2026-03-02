@@ -146,7 +146,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Filter by team Id",
+                        "description": "Filter by team ID",
                         "name": "team_id",
                         "in": "query"
                     },
@@ -158,7 +158,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "description": "Filter by assignee Id",
+                        "description": "Filter by assignee ID",
                         "name": "assignee_id",
                         "in": "query"
                     },
@@ -298,13 +298,51 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "Task update request",
+                        "name": "request",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/task.UpdateTaskRequest"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Task updated successfully",
+                        "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/task.ResponseTask"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/task.ResponseTask"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/common.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "Insufficient permissions",
+                        "schema": {
+                            "$ref": "#/definitions/common.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Task not found",
+                        "schema": {
+                            "$ref": "#/definitions/common.Response"
                         }
                     },
                     "500": {
@@ -345,7 +383,40 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Task history retrieved successfully",
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/entity.TaskHistory"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid task ID",
+                        "schema": {
+                            "$ref": "#/definitions/common.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "Insufficient permissions",
+                        "schema": {
+                            "$ref": "#/definitions/common.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Task not found",
                         "schema": {
                             "$ref": "#/definitions/common.Response"
                         }
@@ -634,13 +705,13 @@ const docTemplate = `{
         "entity.Task": {
             "type": "object",
             "properties": {
-                "assigneeID": {
+                "assignee_id": {
                     "type": "integer"
                 },
-                "createdAt": {
+                "created_at": {
                     "type": "string"
                 },
-                "createdBy": {
+                "created_by": {
                     "type": "integer"
                 },
                 "description": {
@@ -652,14 +723,40 @@ const docTemplate = `{
                 "status": {
                     "$ref": "#/definitions/entity.TaskStatus"
                 },
-                "teamID": {
+                "team_id": {
                     "type": "integer"
                 },
                 "title": {
                     "type": "string"
                 },
-                "updatedAt": {
+                "updated_at": {
                     "type": "string"
+                }
+            }
+        },
+        "entity.TaskHistory": {
+            "type": "object",
+            "properties": {
+                "changed_at": {
+                    "type": "string"
+                },
+                "changed_by": {
+                    "type": "integer"
+                },
+                "field": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "new_value": {
+                    "type": "string"
+                },
+                "old_value": {
+                    "type": "string"
+                },
+                "task_id": {
+                    "type": "integer"
                 }
             }
         },
@@ -739,6 +836,23 @@ const docTemplate = `{
                 "title": {
                     "type": "string",
                     "example": "Task"
+                }
+            }
+        },
+        "task.UpdateTaskRequest": {
+            "type": "object",
+            "properties": {
+                "assignee_id": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
                 }
             }
         },

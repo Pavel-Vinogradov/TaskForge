@@ -36,7 +36,7 @@ func NewApp(servicesConfig *config.Services) (*App, error) {
 		servicesConfig.App.Config.JWT.Expiration,
 	)
 
-	taskUC := usecase.NewTaskUseCase(taskRepo)
+	taskUC := usecase.NewTaskUseCase(taskRepo, taskHistoryRepo)
 	historyObserver := usecase.NewTaskHistoryObserver(taskHistoryRepo)
 	taskUC.AddObserver(historyObserver)
 
