@@ -1,15 +1,15 @@
-SELECT t.id                       AS team_id,
-       t.name                     AS team_name,
-       COUNT(DISTINCT tm.user_id) AS member_count,
-       COUNT(DISTINCT CASE
-                          WHEN task.status = 'done'
-                              AND task.created_at >= '2026-03-01 00:00:00'
-                              THEN task.id
-           END)                   AS completed_tasks_count,
-       '2026-03-01 00:00:00'      AS period_start,
-       '2026-03-31 23:59:59'      AS period_end
-FROM teams t
-         LEFT JOIN team_members tm ON t.id = tm.team_id
-         LEFT JOIN tasks task ON t.id = task.team_id
-GROUP BY t.id, t.name
-ORDER BY t.name;
+select t.id, t.title, COUNT(DISTINCT tm.user_id) as member_count, COUNT(DISTINCT task.id) AS done_tasks_last_7_days
+from tasks t
+         left join team_members tm on tm.team_id = t.id
+         left join tasks task
+                   on task.team_id = t.id and task.status = 'done' and task.created_at >= now() - interval 7 day
+group by t.id, t.title;
+
+
+
+select t.id, t.team_id, t.assignee_id
+from tasks t
+         left join team_members tm on tm.team_id = t.team_id
+    and tm.user_id = t.assignee_id
+where tm.user_id is null
+  and t.assignee_id is not null
