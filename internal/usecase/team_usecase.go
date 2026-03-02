@@ -83,7 +83,7 @@ func (uc *TeamUseCase) ListTeams(ctx context.Context) ([]team.TeamInfo, error) {
 }
 
 func (uc *TeamUseCase) InviteUser(ctx context.Context, teamID int, req team.InviteUserRequest) (team.InviteUserResponse, error) {
-	inviterID, ok := ctx.Value("user_id").(int)
+	inviterID, ok := ctx.Value(contextkeys.UserIDKey).(int)
 	if !ok {
 		return team.InviteUserResponse{}, errors.New("user not authenticated")
 	}
