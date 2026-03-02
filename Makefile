@@ -3,7 +3,7 @@ export DB_USER DB_PASSWORD DB_HOST DB_PORT DB_NAME
 
 MYSQL_URL := mysql://$(DB_USER):$(DB_PASSWORD)@tcp($(DB_HOST):$(DB_PORT))/$(DB_NAME)
 
-.PHONY: help build run test clean migrate-up migrate-down swagger docker-build docker-run docker-up docker-down docker-rebuild docker-logs
+.PHONY: help build run test test-integration clean migrate-up migrate-down swagger docker-build docker-run docker-up docker-down docker-rebuild docker-logs
 
 # Цель по умолчанию
 help:
@@ -11,6 +11,7 @@ help:
 	@echo "  build        - Собрать приложение"
 	@echo "  run          - Запустить приложение"
 	@echo "  test         - Запустить тесты"
+	@echo "  test-integration - Запустить интеграционные тесты"
 	@echo "  clean        - Очистить артефакты сборки"
 	@echo "  migrate-up   - Накатить миграции базы данных"
 	@echo "  migrate-down - Откатить миграции базы данных"
@@ -33,6 +34,10 @@ run:
 # Запустить тесты
 test:
 	go test -v ./...
+
+# Запустить интеграционные тесты
+test-integration:
+	go test -v -tags=integration ./internal/usecase/...
 
 # Очистить артефакты сборки
 clean:

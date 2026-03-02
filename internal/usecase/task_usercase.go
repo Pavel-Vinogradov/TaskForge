@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/sirupsen/logrus"
 )
 
 type TaskUseCase struct {
@@ -78,7 +79,7 @@ func (uc *TaskUseCase) ListTask(ctx context.Context, req task.TaskListRequest) (
 		return task.TaskListResult{}, errors.New("user not authenticated")
 	}
 
-	if req.TeamID != nil {
+	if req.TeamID != nil && uc.redis != nil {
 		cacheKey := fmt.Sprintf("team_tasks:%d:%d:%d:%v:%v",
 			*req.TeamID, req.Page, req.Limit, req.Status, req.AssigneeID)
 		cached, err := uc.redis.Get(ctx, cacheKey).Result()
@@ -108,7 +109,7 @@ func (uc *TaskUseCase) ListTask(ctx context.Context, req task.TaskListRequest) (
 		Total: total,
 	}
 
-	if req.TeamID != nil {
+	if req.TeamID != nil && uc.redis != nil {
 		cacheKey := fmt.Sprintf("team_tasks:%d:%d:%d:%v:%v",
 			*req.TeamID, req.Page, req.Limit, req.Status, req.AssigneeID)
 		jsonData, _ := json.Marshal(result)
@@ -156,9 +157,32 @@ func (uc *TaskUseCase) UpdateTask(ctx context.Context, taskID int, req task.Upda
 	}
 
 	pattern := fmt.Sprintf("team_tasks:%d:*", updatedTask.TeamID)
-	keys, err := uc.redis.Keys(ctx, pattern).Result()
-	if len(keys) > 0 {
-		uc.redis.Del(ctx, keys...)
+	if uc.redis != nil {
+		var cursor uint64
+		for {
+			keys, nextCursor, err := uc.redis.Scan(ctx, cursor, pattern, 100).Result()
+			if err != nil {
+				logrus.WithContext(ctx).
+					WithError(err).
+					WithField("pattern", pattern).
+					Error("redis scan failed during cache invalidation")
+				break
+			}
+
+			if len(keys) > 0 {
+				if err := uc.redis.Del(ctx, keys...).Err(); err != nil {
+					logrus.WithContext(ctx).
+						WithError(err).
+						WithField("keys_count", len(keys)).
+						Error("redis delete failed during cache invalidation")
+				}
+			}
+
+			cursor = nextCursor
+			if cursor == 0 {
+				break
+			}
+		}
 	}
 	for _, observer := range uc.observers {
 		observer.OnTaskUpdated(ctx, originalTask, updatedTask, userID)
