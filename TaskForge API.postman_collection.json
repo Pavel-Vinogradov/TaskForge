@@ -1,0 +1,672 @@
+{
+  "info": {
+    "_postman_id": "5a870834-14ca-4801-80b3-9c13779ab07b",
+    "name": "TaskForge API",
+    "description": "Полностью автоматизированная коллекция с сохранением ID и токенов",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "14486266",
+    "_collection_link": "https://go.postman.co/collection/14486266-5a870834-14ca-4801-80b3-9c13779ab07b?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "01. Auth (Аутентификация)",
+      "item": [
+        {
+          "name": "Register User 1 (Owner)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.response.to.have.status.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "var token = \"\";",
+                  "",
+                  "// Поиск токена в разных структурах ответа",
+                  "if (jsonData.data && jsonData.data.token) {",
+                  "    token = jsonData.data.token;",
+                  "} else if (jsonData.token) {",
+                  "    token = jsonData.token;",
+                  "} else if (jsonData.data && jsonData.data.user_id) {",
+                  "    // Если токен не вернулся, пробуем логин следующим шагом",
+                  "    console.log(\"Registration successful, token will be retrieved via login\");",
+                  "}",
+                  "",
+                  "if (token) {",
+                  "    pm.environment.set(\"token\", token);",
+                  "    console.log(\"✅ Token saved: \" + token);",
+                  "}",
+                  "",
+                  "// Сохранение ID текущего пользователя если есть",
+                  "if (jsonData.data && jsonData.data.user_id) {",
+                  "    pm.environment.set(\"user_id_1\", jsonData.data.user_id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"owner{{randomInt}}@example.com\",\n    \"password\": \"password123\",\n    \"username\": \"Owner{{randomInt}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login User 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "var token = \"\";",
+                  "",
+                  "if (jsonData.data && jsonData.data.token) {",
+                  "    token = jsonData.data.token;",
+                  "} else if (jsonData.token) {",
+                  "    token = jsonData.token;",
+                  "}",
+                  "",
+                  "pm.test(\"Token is present\", function () {",
+                  "    pm.expect(token).to.not.be.empty;",
+                  "});",
+                  "",
+                  "if (token) {",
+                  "    pm.environment.set(\"token\", token);",
+                  "    console.log(\"✅ Token updated: \" + token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"owner{{randomInt}}@example.com\",\n    \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02. Teams (Команды)",
+      "item": [
+        {
+          "name": "Create Team",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "var teamId = \"\";",
+                  "",
+                  "// Поиск team_id в разных структурах",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "    teamId = jsonData.data.id;",
+                  "} else if (jsonData.id) {",
+                  "    teamId = jsonData.id;",
+                  "} else if (jsonData.data && jsonData.data.team_id) {",
+                  "    teamId = jsonData.data.team_id;",
+                  "}",
+                  "",
+                  "pm.test(\"Team ID is present\", function () {",
+                  "    pm.expect(teamId).to.not.be.empty;",
+                  "});",
+                  "",
+                  "if (teamId) {",
+                  "    pm.environment.set(\"team_id\", teamId);",
+                  "    console.log(\"✅ Team ID saved: \" + teamId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Test Team {{randomInt}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/teams",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "teams"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Teams",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "var teams = [];",
+                  "",
+                  "if (jsonData.data && Array.isArray(jsonData.data)) {",
+                  "    teams = jsonData.data;",
+                  "} else if (Array.isArray(jsonData)) {",
+                  "    teams = jsonData;",
+                  "}",
+                  "",
+                  "if (teams.length > 0) {",
+                  "    console.log(\"✅ Found \" + teams.length + \" teams\");",
+                  "    // Если team_id еще не установлен, берем из первой команды",
+                  "    if (!pm.environment.get(\"team_id\")) {",
+                  "        pm.environment.set(\"team_id\", teams[0].id);",
+                  "        console.log(\"✅ Team ID set from list: \" + teams[0].id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/teams",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "teams"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Invite User to Team",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 or 200\", function () {",
+                  "    pm.response.to.have.status.oneOf([200, 201]);",
+                  "});",
+                  "console.log(\"✅ User invited to team\");"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Проверка наличия team_id",
+                  "if (!pm.environment.get(\"team_id\")) {",
+                  "    throw new Error(\"❌ team_id is not set. Please create a team first.\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"user_id\": {{user_id_2}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/teams/{{team_id}}/invite",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "teams",
+                "{{team_id}}",
+                "invite"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03. Tasks (Задачи)",
+      "item": [
+        {
+          "name": "Create Task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "var taskId = \"\";",
+                  "",
+                  "// Поиск task_id в разных структурах",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "    taskId = jsonData.data.id;",
+                  "} else if (jsonData.id) {",
+                  "    taskId = jsonData.id;",
+                  "} else if (jsonData.Data && jsonData.Data.id) {",
+                  "    taskId = jsonData.Data.id;",
+                  "}",
+                  "",
+                  "pm.test(\"Task ID is present\", function () {",
+                  "    pm.expect(taskId).to.not.be.empty;",
+                  "});",
+                  "",
+                  "if (taskId) {",
+                  "    pm.environment.set(\"task_id\", taskId);",
+                  "    console.log(\"✅ Task ID saved: \" + taskId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (!pm.environment.get(\"team_id\")) {",
+                  "    throw new Error(\"❌ team_id is not set. Please create a team first.\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"Task {{randomInt}}\",\n    \"description\": \"Auto-generated task\",\n    \"team_id\": {{team_id}},\n    \"assignee_id\": {{user_id_2}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Tasks",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "var tasks = [];",
+                  "",
+                  "if (jsonData.data && jsonData.data.Data && Array.isArray(jsonData.data.Data)) {",
+                  "    tasks = jsonData.data.Data;",
+                  "} else if (jsonData.Data && Array.isArray(jsonData.Data)) {",
+                  "    tasks = jsonData.Data;",
+                  "} else if (jsonData.data && Array.isArray(jsonData.data)) {",
+                  "    tasks = jsonData.data;",
+                  "}",
+                  "",
+                  "console.log(\"✅ Found \" + tasks.length + \" tasks\");",
+                  "",
+                  "// Если task_id еще не установлен, берем из первого элемента",
+                  "if (tasks.length > 0 && !pm.environment.get(\"task_id\")) {",
+                  "    pm.environment.set(\"task_id\", tasks[0].id);",
+                  "    console.log(\"✅ Task ID set from list: \" + tasks[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks?page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "team_id",
+                  "value": "{{team_id}}",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "todo",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "console.log(\"✅ Task updated successfully\");"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (!pm.environment.get(\"task_id\")) {",
+                  "    throw new Error(\"❌ task_id is not set. Please create a task first.\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"in_progress\",\n    \"title\": \"Task {{randomInt}} (Updated)\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks/{{task_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "{{task_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Task History",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "var history = [];",
+                  "",
+                  "if (jsonData.data && Array.isArray(jsonData.data)) {",
+                  "    history = jsonData.data;",
+                  "} else if (jsonData.data && jsonData.data.Data && Array.isArray(jsonData.data.Data)) {",
+                  "    history = jsonData.data.Data;",
+                  "}",
+                  "",
+                  "console.log(\"✅ History records found: \" + history.length);",
+                  "",
+                  "if (history.length > 0) {",
+                  "    pm.test(\"History is not empty\", function () {",
+                  "        pm.expect(history.length).to.be.above(0);",
+                  "    });",
+                  "    console.log(\"✅ Last change: \" + history[history.length - 1].field);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (!pm.environment.get(\"task_id\")) {",
+                  "    throw new Error(\"❌ task_id is not set.\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks/{{task_id}}/history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "{{task_id}}",
+                "history"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04. Cleanup (Очистка)",
+      "item": [
+        {
+          "name": "Clear Variables",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.environment.unset(\"token\");",
+                  "pm.environment.unset(\"team_id\");",
+                  "pm.environment.unset(\"task_id\");",
+                  "console.log(\"✅ All variables cleared\");"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": [
+                "{{baseUrl}}"
+              ]
+            },
+            "description": "Виртуальный запрос для очистки переменных"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "team_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "task_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id_2",
+      "value": "2",
+      "type": "string",
+      "description": "ID второго пользователя для приглашения"
+    }
+  ]
+}
