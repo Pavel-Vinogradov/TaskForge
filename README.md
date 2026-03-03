@@ -42,7 +42,7 @@ TaskForge/
 ### 1. Клонирование и установка зависимостей
 
 ```bash
-git clone <repository-url>
+git clone git@github.com:Pavel-Vinogradov/TaskForge.git
 cd TaskForge
 go mod download
 ```
